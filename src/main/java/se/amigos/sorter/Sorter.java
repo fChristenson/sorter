@@ -24,9 +24,9 @@ public class Sorter {
             int size = fileList.size();
 
             if (size <= DEFAULT_GROUP_SIZE) {
-                File newFolder = createNewFolder(path);
+                File newFolder = createNewFolderIn(path);
                 copyFilesToFolder(fileList, newFolder);
-                removeFiles(fileList);
+                removeFilesOnDisk(fileList);
             }
         }
     }
@@ -35,11 +35,11 @@ public class Sorter {
 
     }
 
-    private static void removeFiles(List<File> fileList) {
+    private static void removeFilesOnDisk(List<File> fileList) {
 
     }
 
-    private static File createNewFolder(Path path) {
+    private static File createNewFolderIn(Path path) {
         File newFolder = new File(path.toString(), UUID.randomUUID().toString());
         boolean mkdir = newFolder.mkdir();
 
