@@ -61,12 +61,13 @@ public class SortTest extends TestCase {
         File[] listFiles = path.toFile().listFiles();
         List<File> asList = Arrays.asList(listFiles);
 
-        long count = asList.parallelStream().filter(File::isDirectory).count();
-        assertEquals("sorter creates 1 folder", 1, count);
+        List<File> list = asList.parallelStream().filter(File::isDirectory)
+                .collect(Collectors.toList());
 
-        File file = asList.parallelStream().filter(File::isDirectory)
-                .collect(Collectors.toList()).get(0);
-        assertEquals("folder has same amount of files", 50, file.list().length);
+        assertEquals("sorter creates 1 folder", 1, list.size());
+
+        File folder = list.get(0);
+        assertEquals("folder has same amount of files", 50, folder.list().length);
 
     }
 
