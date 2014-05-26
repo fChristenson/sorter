@@ -1,7 +1,10 @@
 package se.amigos.sorter;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -26,17 +29,24 @@ public class Sorter {
             if (size <= DEFAULT_GROUP_SIZE) {
                 File newFolder = createNewFolderIn(path);
                 copyFilesToFolder(fileList, newFolder);
-                removeFilesOnDisk(fileList);
             }
         }
     }
 
     private static void copyFilesToFolder(List<File> fileList, File newFolder) {
+        fileList.parallelStream().forEach(
+                file -> {
+                    try {
+                        Path path = Paths.get(newFolder.toString(),
+                                file.getName());
+                        Files.copy(file.toPath(), path,
+                                StandardCopyOption.REPLACE_EXISTING);
+                        file.delete();
 
-    }
-
-    private static void removeFilesOnDisk(List<File> fileList) {
-
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
     }
 
     private static File createNewFolderIn(Path path) {
