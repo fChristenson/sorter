@@ -82,7 +82,8 @@ public class SortTest extends TestCase {
         assertEquals("folder has same amount of files", 50, count);
     }
 
-    private void makeFolderWithMockFiles(Path path, int numFiles) throws IOException {
+    private void makeFolderWithMockFiles(Path path, int numFiles)
+            throws IOException {
         File file = path.toFile();
         if (file.exists()) {
             return;
@@ -90,8 +91,8 @@ public class SortTest extends TestCase {
         file.mkdir();
 
         for (int i = 0; i < numFiles; ++i) {
-            Path subFile = Paths.get(path.toString() + "/" + i);
-            subFile.toFile().createNewFile();
+            File newFile = new File(path.toString(), String.valueOf(i));
+            newFile.createNewFile();
         }
     }
 
