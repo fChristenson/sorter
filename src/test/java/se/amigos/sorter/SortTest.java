@@ -9,33 +9,22 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class SortTest extends TestCase {
 
-    private static final int NUM_FILES = 10;
     private Sorter sorter;
     private Path path;
 
+    @Before
     protected void setUp() throws Exception {
         sorter = new Sorter();
         path = Paths.get("testfolder");
-        makeFolder(path);
     }
 
-    private void makeFolder(Path path) throws IOException {
-        File file = path.toFile();
-        if (file.exists()) {
-            return;
-        }
-        file.mkdir();
-
-        for (int i = 0; i < NUM_FILES; ++i) {
-            Path subFile = Paths.get(path.toString() + "/" + i);
-            subFile.toFile().createNewFile();
-        }
-    }
-
+    @After
     protected void tearDown() throws Exception {
         deleteFolder(path);
     }
@@ -43,7 +32,10 @@ public class SortTest extends TestCase {
     private void deleteFolder(Path path) {
         File file = path.toFile();
 
-        if (file.list().length < 1) {
+        if (!file.exists()) {
+            return;
+
+        } else if (file.list().length < 1) {
             file.delete();
 
         } else {
@@ -61,13 +53,50 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles() throws Exception {
+    public void testSortFiles_50_files() throws Exception {
+        makeFolder(path, 50);
+
         Sorter.sortDirectory(path);
         File[] listFiles = path.toFile().listFiles();
         List<File> asList = Arrays.asList(listFiles);
 
         long count = asList.parallelStream().filter(File::isDirectory).count();
-        assertTrue("sorter adds files to folders by defailt groupsize",
-                count > 0);
+        assertEquals("sorter creates 1 folder", 1, count);
+
+        count = asList.parallelStream().filter(f -> !f.isDirectory()).count();
+        assertEquals("folder has same amount of files", 50, count);
+    }
+
+    @Test
+    public void testSortFiles_51_files() throws Exception {
+        makeFolder(path, 51);
+
+        Sorter.sortDirectory(path);
+        File[] listFiles = path.toFile().listFiles();
+        List<File> asList = Arrays.asList(listFiles);
+
+        long count = asList.parallelStream().filter(File::isDirectory).count();
+        assertEquals("sorter creates 2 folders", 2, count);
+
+        count = asList.parallelStream().filter(f -> !f.isDirectory()).count();
+        assertEquals("folder has same amount of files", 50, count);
+    }
+
+    private void makeFolder(Path path, int numFiles) throws IOException {
+        File file = path.toFile();
+        if (file.exists()) {
+            return;
+        }
+        file.mkdir();
+
+        for (int i = 0; i < numFiles; ++i) {
+            Path subFile = Paths.get(path.toString() + "/" + i);
+            subFile.toFile().createNewFile();
+        }
+    }
+
+    @Test
+    public void test() throws Exception {
+
     }
 }
