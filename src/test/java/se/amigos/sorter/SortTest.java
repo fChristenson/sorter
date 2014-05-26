@@ -95,8 +95,4 @@ public class SortTest extends TestCase {
         }
     }
 
-    @Test
-    public void test() throws Exception {
-
-    }
 }
