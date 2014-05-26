@@ -54,7 +54,7 @@ public class SortTest extends TestCase {
 
     @Test
     public void testSortFiles_50_files() throws Exception {
-        makeFolder(path, 50);
+        makeFolderWithMockFiles(path, 50);
 
         Sorter.sortDirectory(path);
         File[] listFiles = path.toFile().listFiles();
@@ -69,7 +69,7 @@ public class SortTest extends TestCase {
 
     @Test
     public void testSortFiles_51_files() throws Exception {
-        makeFolder(path, 51);
+        makeFolderWithMockFiles(path, 51);
 
         Sorter.sortDirectory(path);
         File[] listFiles = path.toFile().listFiles();
@@ -82,7 +82,7 @@ public class SortTest extends TestCase {
         assertEquals("folder has same amount of files", 50, count);
     }
 
-    private void makeFolder(Path path, int numFiles) throws IOException {
+    private void makeFolderWithMockFiles(Path path, int numFiles) throws IOException {
         File file = path.toFile();
         if (file.exists()) {
             return;
