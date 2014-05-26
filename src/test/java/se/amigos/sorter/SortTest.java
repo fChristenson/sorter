@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import junit.framework.TestCase;
 
@@ -63,23 +64,10 @@ public class SortTest extends TestCase {
         long count = asList.parallelStream().filter(File::isDirectory).count();
         assertEquals("sorter creates 1 folder", 1, count);
 
-        count = asList.parallelStream().filter(f -> !f.isDirectory()).count();
-        assertEquals("folder has same amount of files", 50, count);
-    }
+        File file = asList.parallelStream().filter(File::isDirectory)
+                .collect(Collectors.toList()).get(0);
+        assertEquals("folder has same amount of files", 50, file.list().length);
 
-    @Test
-    public void testSortFiles_51_files() throws Exception {
-        makeFolderWithMockFiles(path, 51);
-
-        Sorter.sortDirectory(path);
-        File[] listFiles = path.toFile().listFiles();
-        List<File> asList = Arrays.asList(listFiles);
-
-        long count = asList.parallelStream().filter(File::isDirectory).count();
-        assertEquals("sorter creates 2 folders", 2, count);
-
-        count = asList.parallelStream().filter(f -> !f.isDirectory()).count();
-        assertEquals("folder has same amount of files", 50, count);
     }
 
     private void makeFolderWithMockFiles(Path path, int numFiles)
