@@ -1,4 +1,4 @@
-package se.amigos.sorter;
+package se.fidde.sorter;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,18 +29,38 @@ public class Sorter {
 
             if (size <= DEFAULT_GROUP_SIZE) {
                 File newFolder = createNewFolderIn(path);
-                copyFilesToFolder(fileList, newFolder);
+                moveFilesToFolder(fileList, newFolder);
+
+            } else {
+                List<List<File>> groupedList = new LinkedList<>();
+                // we group the list by size so we can add each sublist to a new
+                // folder
+                groupList(fileList, size, groupedList);
+
+                groupedList.forEach(list -> {
+                    File newFolder = createNewFolderIn(path);
+                    moveFilesToFolder(list, newFolder);
+                });
             }
         }
     }
 
-    private static void copyFilesToFolder(List<File> fileList, File newFolder) {
+    private static void groupList(List<File> fileList, int size,
+            List<List<File>> groupedList) {
+
+        for (int i = 0; i < size; i += DEFAULT_GROUP_SIZE) {
+            groupedList.add(fileList.subList(i,
+                    i + (Math.min(DEFAULT_GROUP_SIZE, size - i))));
+        }
+    }
+
+    private static void moveFilesToFolder(List<File> fileList, File newFolder) {
         fileList.parallelStream().forEach(
                 file -> {
                     try {
                         Path path = Paths.get(newFolder.toString(),
                                 file.getName());
-                        Files.copy(file.toPath(), path,
+                        Files.move(file.toPath(), path,
                                 StandardCopyOption.REPLACE_EXISTING);
                         file.delete();
 
@@ -58,5 +79,9 @@ public class Sorter {
         }
         throw new IllegalArgumentException("Could not create folder: "
                 + newFolder.toString());
+    }
+
+    public static void sortDirectory(Path path, String[] args) {
+
     }
 }
