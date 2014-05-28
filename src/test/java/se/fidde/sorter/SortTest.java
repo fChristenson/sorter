@@ -144,6 +144,24 @@ public class SortTest extends TestCase {
         assertEquals("old files are removed", 1, path.toFile().list().length);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testSortFiles_group_size_100_fail() throws Exception {
+        makeFolderWithMockFiles(path, 100);
+
+        String[] args = { "-s 0" };
+        Sorter.sortDirectory(path, args);
+
+        List<File> fileList = getFileList();
+
+        assertEquals("sorter creates folders", 1, fileList.size());
+
+        File folder = fileList.get(0);
+        assertEquals("folder has same amount of files", 100,
+                folder.list().length);
+
+        assertEquals("old files are removed", 1, path.toFile().list().length);
+    }
+
     private List<File> getFileList() {
         File[] listFiles = path.toFile().listFiles();
         List<File> asList = Arrays.asList(listFiles);
