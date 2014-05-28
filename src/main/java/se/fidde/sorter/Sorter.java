@@ -35,7 +35,7 @@ public class Sorter {
                 List<List<File>> groupedList = new LinkedList<>();
                 // we group the list by size so we can add each sublist to a new
                 // folder
-                groupList(fileList, size, groupedList);
+                createGroupedList(fileList, size, groupedList);
 
                 groupedList.forEach(list -> {
                     File newFolder = createNewFolderIn(path);
@@ -45,7 +45,7 @@ public class Sorter {
         }
     }
 
-    private static void groupList(List<File> fileList, int size,
+    private static void createGroupedList(List<File> fileList, int size,
             List<List<File>> groupedList) {
 
         for (int i = 0; i < size; i += DEFAULT_GROUP_SIZE) {
