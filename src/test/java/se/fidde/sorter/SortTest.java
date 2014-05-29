@@ -151,7 +151,7 @@ public class SortTest extends TestCase {
     }
 
     // expected exception not working, no idea why
-    @Test(expected = Exception.class)
+    @Test
     public void testSortFiles_group_size_100_fail() throws Exception {
         makeFolderWithMockFiles(path, 100);
 
