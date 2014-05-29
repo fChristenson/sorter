@@ -2,14 +2,16 @@ package se.fidde.sorter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import junit.framework.TestCase;
 
@@ -32,29 +34,33 @@ public class SortTest extends TestCase {
     }
 
     private void deleteFolder(Path path) throws IOException {
-        Stream<Path> streamToFiles = Files.find(path, 1,
-                (p, attr) -> attr.isDirectory() || attr.isRegularFile(),
-                FileVisitOption.FOLLOW_LINKS);
-
-        streamToFiles.forEach(p -> {
-            File file = p.toFile();
-            deleteFile(file);
-        });
-
-        streamToFiles.close();
-        deleteFile(path.toFile());
+        FileVisitor<Path> visitor = getFileVisitor();
+        Files.walkFileTree(path, visitor);
     }
 
-    private void deleteFile(File file) {
-        if (file.isDirectory() && file.list().length > 0) {
-            File[] listFiles = file.listFiles();
-            List<File> asList = Arrays.asList(listFiles);
+    private FileVisitor<Path> getFileVisitor() {
+        FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file,
+                    BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
 
-            asList.forEach(File::delete);
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+                    throws IOException {
 
-        } else {
-            file.delete();
-        }
+                if (exc == null) {
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+
+                } else {
+                    throw exc;
+                }
+            }
+        };
+        return visitor;
     }
 
     @Test
