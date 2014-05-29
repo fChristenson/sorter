@@ -130,7 +130,7 @@ public class SortTest extends TestCase {
     public void testSortFiles_group_size_100() throws Exception {
         makeFolderWithMockFiles(path, 100);
 
-        String[] args = { "-s 100" };
+        String[] args = { "100" };
         Sorter.sortDirectory(path, args);
 
         List<File> fileList = getFileList();
@@ -144,22 +144,20 @@ public class SortTest extends TestCase {
         assertEquals("old files are removed", 1, path.toFile().list().length);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    // expected exception not working, no idea why
+    @Test(expected = Exception.class)
     public void testSortFiles_group_size_100_fail() throws Exception {
         makeFolderWithMockFiles(path, 100);
 
-        String[] args = { "-s 0" };
-        Sorter.sortDirectory(path, args);
+        String[] args = { "0" };
+        try {
+            Sorter.sortDirectory(path, args);
+            fail();
 
-        List<File> fileList = getFileList();
-
-        assertEquals("sorter creates folders", 1, fileList.size());
-
-        File folder = fileList.get(0);
-        assertEquals("folder has same amount of files", 100,
-                folder.list().length);
-
-        assertEquals("old files are removed", 1, path.toFile().list().length);
+        } catch (Exception e) {
+            assertTrue("can get exception",
+                    e.getMessage().contains("group size less than 1"));
+        }
     }
 
     private List<File> getFileList() {

@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 public class Sorter {
 
     private static final int DEFAULT_GROUP_SIZE = 50;
-    private static final String SIZE_FLAG = "-s";
 
     public static void sortDirectory(Path path) {
         File file = path.toFile();
@@ -83,7 +82,7 @@ public class Sorter {
                 + newFolder.toString());
     }
 
-    public static void sortDirectory(Path path, String[] args) {
+    public static void sortDirectory(Path path, String[] args) throws Exception {
         File file = path.toFile();
 
         if (file.exists() && file.isDirectory()) {
@@ -97,7 +96,7 @@ public class Sorter {
 
             int groupSize = getGroupSize(args);
             if (groupSize < 1) {
-                throw new IllegalArgumentException("group size less than 1");
+                throw new Exception("group size less than 1");
 
             } else if (size <= groupSize) {
                 File newFolder = createNewFolderIn(path);
@@ -119,14 +118,11 @@ public class Sorter {
 
     private static int getGroupSize(String[] args) {
         List<String> asList = Arrays.asList(args);
-        asList.stream().filter(str -> str.substring(0, 2).equals(SIZE_FLAG))
+        int sum = asList.stream().filter(str -> str.trim().matches("\\d+"))
                 .mapToInt(str -> {
-                    String number = str.substring(2).trim();
-                    if (number.matches("\\d{1,}")) {
-                        return Integer.valueOf(number);
-                    }
-                    return -1;
-                });
-        return 0;
+                    return Integer.valueOf(str);
+                }).sum();
+
+        return sum;
     }
 }
