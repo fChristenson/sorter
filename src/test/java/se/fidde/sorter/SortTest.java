@@ -64,7 +64,7 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_50_files() throws Exception {
+    public void testSortFiles_50() throws Exception {
         makeFolderWithMockFiles(path, 50);
 
         Sorter.sortDirectory(path);
@@ -80,7 +80,7 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_51_files() throws Exception {
+    public void testSortFiles_51() throws Exception {
         makeFolderWithMockFiles(path, 51);
 
         Sorter.sortDirectory(path);
@@ -103,7 +103,7 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_10000_files() throws Exception {
+    public void testSortFiles_10000() throws Exception {
         makeFolderWithMockFiles(path, 10000);
 
         Sorter.sortDirectory(path);
@@ -118,7 +118,7 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_10001_files() throws Exception {
+    public void testSortFiles_10001() throws Exception {
         makeFolderWithMockFiles(path, 10001);
 
         Sorter.sortDirectory(path);
@@ -133,10 +133,10 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_group_size_100() throws Exception {
-        makeFolderWithMockFiles(path, 100);
+    public void testSortFiles_groupSizeEqualToFiles() throws Exception {
+        makeFolderWithMockFiles(path, 1);
 
-        String[] args = { "100" };
+        String[] args = { "1" };
         Sorter.sortDirectory(path, args);
 
         List<File> fileList = getFileList();
@@ -144,16 +144,15 @@ public class SortTest extends TestCase {
         assertEquals("sorter creates folders", 1, fileList.size());
 
         File folder = fileList.get(0);
-        assertEquals("folder has same amount of files", 100,
-                folder.list().length);
+        assertEquals("folder has same amount of files", 1, folder.list().length);
 
         assertEquals("old files are removed", 1, path.toFile().list().length);
     }
 
     // expected exception not working, no idea why
     @Test
-    public void testSortFiles_group_size_100_fail() throws Exception {
-        makeFolderWithMockFiles(path, 100);
+    public void testSortFiles_groupSize_fail() throws Exception {
+        makeFolderWithMockFiles(path, 1);
 
         String[] args = { "0" };
         try {
@@ -167,7 +166,7 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_group_size_2_with_1_file() throws Exception {
+    public void testSortFiles_groupSizeLargerThanFiles() throws Exception {
         makeFolderWithMockFiles(path, 1);
 
         String[] args = { "2" };
@@ -185,8 +184,22 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_group_size_1_with_2_file() throws Exception {
-        fail();
+    public void testSortFiles_groupSizeLessThanFiles() throws Exception {
+        makeFolderWithMockFiles(path, 2);
+
+        String[] args = { "1" };
+        Sorter.sortDirectory(path, args);
+
+        List<File> fileList = getFileList();
+
+        assertEquals("sorter creates folders", 2, fileList.size());
+
+        int folder1 = fileList.get(0).list().length;
+        int folder2 = fileList.get(1).list().length;
+        assertEquals("folder has same amount of files", 2, folder1 + folder2);
+
+        assertEquals("old files are removed", 2, path.toFile().list().length);
+
     }
 
     private List<File> getFileList() {
