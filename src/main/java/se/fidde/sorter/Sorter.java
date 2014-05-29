@@ -5,54 +5,65 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Sorter {
 
     private static final int DEFAULT_GROUP_SIZE = 50;
 
-    public static void sortDirectory(Path path) {
+    public static void sortDirectory(Path path, String... args) {
         File file = path.toFile();
 
         if (file.exists() && file.isDirectory()) {
-            File[] listFiles = file.listFiles();
-            List<File> asList = Arrays.asList(listFiles);
+            Stream<File> stream = Stream.of(file.listFiles());
 
-            List<File> fileList = asList.parallelStream()
+            List<File> fileList = stream.parallel()
                     .filter(f -> !f.isDirectory()).collect(Collectors.toList());
 
             int size = fileList.size();
 
-            if (size <= DEFAULT_GROUP_SIZE) {
-                File newFolder = createNewFolderIn(path);
-                moveFilesToFolder(fileList, newFolder);
+            boolean sortBySuffix = hasSuffixArgs(args);
+            if (sortBySuffix) {
+                sortBySuffix(fileList, path, args);
 
             } else {
-                List<List<File>> groupedList = new LinkedList<>();
-                // we group the list by size so we can add each sublist to a new
-                // folder
-                createGroupedList(fileList, size, groupedList,
-                        DEFAULT_GROUP_SIZE);
-
-                groupedList.forEach(list -> {
-                    File newFolder = createNewFolderIn(path);
-                    moveFilesToFolder(list, newFolder);
-                });
+                sortByGroupSize(path, fileList, size, args);
             }
         }
     }
 
-    private static void createGroupedList(List<File> fileList, int size,
-            List<List<File>> groupedList, int groupSize) {
+    private static void sortByGroupSize(Path path, List<File> fileList,
+            int size, String... args) {
+        // we group the list by size so we can add each sublist to a new
+        // folder
+        int groupSize = getGroupSize(args);
+        List<List<File>> groupedList = createGroupedList(fileList, size,
+                groupSize);
 
+        groupedList.forEach(list -> {
+            File newFolder = createNewFolderIn(path);
+            moveFilesToFolder(list, newFolder);
+        });
+    }
+
+    private static boolean hasSuffixArgs(String[] args) {
+        Stream<String> stream = Stream.of(args);
+        long count = stream.filter(str -> str.matches("\\.\\w+")).count();
+        return count > 0;
+    }
+
+    private static List<List<File>> createGroupedList(List<File> fileList,
+            int size, int groupSize) {
+
+        List<List<File>> result = new LinkedList<>();
         for (int i = 0; i < size; i += groupSize) {
-            groupedList.add(fileList.subList(i,
-                    i + (Math.min(groupSize, size - i))));
+            result.add(fileList.subList(i, i + (Math.min(groupSize, size - i))));
         }
+        return result;
     }
 
     private static void moveFilesToFolder(List<File> fileList, File newFolder) {
@@ -63,12 +74,45 @@ public class Sorter {
                                 file.getName());
                         Files.move(file.toPath(), path,
                                 StandardCopyOption.REPLACE_EXISTING);
-                        file.delete();
 
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 });
+    }
+
+    private static void sortBySuffix(List<File> fileList, Path path,
+            String[] suffix) {
+
+        List<String> suffixList = getSuffixList(suffix);
+        List<List<File>> groupedList = createListGroupedBySuffix(fileList,
+                suffixList);
+
+        groupedList.parallelStream().forEach(list -> {
+            File folder = createNewFolderIn(path);
+            moveFilesToFolder(list, folder);
+        });
+    }
+
+    private static List<List<File>> createListGroupedBySuffix(
+            List<File> fileList, List<String> suffixList) {
+        List<List<File>> groupedList = new LinkedList<>();
+        suffixList.parallelStream().forEach(
+                str -> {
+                    List<File> list = fileList.parallelStream()
+                            .filter(f -> f.getName().contains(str))
+                            .collect(Collectors.toList());
+                    groupedList.add(list);
+                });
+        return groupedList;
+    }
+
+    private static List<String> getSuffixList(String[] suffix) {
+        Stream<String> stream = Stream.of(suffix);
+        List<String> suffixList = stream.filter(
+                str -> str.matches("\\.\\w{1,3}")).collect(Collectors.toList());
+
+        return suffixList;
     }
 
     private static File createNewFolderIn(Path path) {
@@ -82,47 +126,16 @@ public class Sorter {
                 + newFolder.toString());
     }
 
-    public static void sortDirectory(Path path, String[] args) throws Exception {
-        File file = path.toFile();
-
-        if (file.exists() && file.isDirectory()) {
-            File[] listFiles = file.listFiles();
-            List<File> asList = Arrays.asList(listFiles);
-
-            List<File> fileList = asList.parallelStream()
-                    .filter(f -> !f.isDirectory()).collect(Collectors.toList());
-
-            int size = fileList.size();
-
-            int groupSize = getGroupSize(args);
-            if (groupSize < 1) {
-                throw new Exception("group size less than 1");
-
-            } else if (size <= groupSize) {
-                File newFolder = createNewFolderIn(path);
-                moveFilesToFolder(fileList, newFolder);
-
-            } else {
-                List<List<File>> groupedList = new LinkedList<>();
-                // we group the list by size so we can add each sublist to a new
-                // folder
-                createGroupedList(fileList, size, groupedList, groupSize);
-
-                groupedList.forEach(list -> {
-                    File newFolder = createNewFolderIn(path);
-                    moveFilesToFolder(list, newFolder);
-                });
-            }
-        }
-    }
-
     private static int getGroupSize(String[] args) {
-        List<String> asList = Arrays.asList(args);
-        int sum = asList.stream().filter(str -> str.trim().matches("\\d+"))
+        Stream<String> stream = Stream.of(args);
+        int sum = stream.filter(str -> str.trim().matches("\\d+"))
                 .mapToInt(str -> {
                     return Integer.valueOf(str);
                 }).sum();
 
+        if (sum < 1) {
+            return DEFAULT_GROUP_SIZE;
+        }
         return sum;
     }
 }

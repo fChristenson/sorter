@@ -9,9 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import junit.framework.TestCase;
 
@@ -21,16 +21,20 @@ import org.junit.Test;
 
 public class SortTest extends TestCase {
 
-    private Path path;
+    private Path root;
+    private int foldersInRoot;
+    private int filesInFolders;
+    private int filesInRoot;
+    private List<File> rootFiles;
 
     @Before
     protected void setUp() throws Exception {
-        path = Paths.get("testfolder");
+        root = Paths.get("testfolder");
     }
 
     @After
     protected void tearDown() throws Exception {
-        deleteFolder(path);
+        deleteFolder(root);
     }
 
     private void deleteFolder(Path path) throws IOException {
@@ -65,33 +69,39 @@ public class SortTest extends TestCase {
 
     @Test
     public void testSortFiles_50() throws Exception {
-        makeFolderWithMockFiles(path, 50);
+        makeFolderWithMockFiles(50);
 
-        Sorter.sortDirectory(path);
-        List<File> fileList = getFileList();
+        Sorter.sortDirectory(root);
 
-        assertEquals("sorter creates folders", 1, fileList.size());
+        foldersInRoot = getRootFiles().size();
+        filesInFolders = getRootFiles().get(0).list().length;
+        filesInRoot = root.toFile().list().length;
 
-        File folder = fileList.get(0);
-        assertEquals("folder has same amount of files", 50,
-                folder.list().length);
+        assertCorrectNumFiles(1, 50, 1);
+    }
 
-        assertEquals("old files are removed", 1, path.toFile().list().length);
+    private void assertCorrectNumFiles(int foldersExpected, int filesExpected,
+            int remainingExpected) {
+        assertEquals("folders in root", foldersExpected, foldersInRoot);
+
+        assertEquals("files in folders", filesExpected, filesInFolders);
+
+        assertEquals("files in root", remainingExpected, filesInRoot);
     }
 
     @Test
     public void testSortFiles_51() throws Exception {
-        makeFolderWithMockFiles(path, 51);
+        makeFolderWithMockFiles(51);
 
-        Sorter.sortDirectory(path);
-        List<File> folderList = getFileList();
+        Sorter.sortDirectory(root);
 
-        assertEquals("sorter creates folders", 2, folderList.size());
+        foldersInRoot = getRootFiles().size();
+        int folder1 = getRootFiles().get(0).list().length;
+        int folder2 = getRootFiles().get(1).list().length;
+        filesInFolders = folder1 + folder2;
+        filesInRoot = root.toFile().list().length;
 
-        int folder1 = folderList.get(0).list().length;
-        int folder2 = folderList.get(1).list().length;
-
-        assertEquals("folders has same amount of files", 51, folder1 + folder2);
+        assertCorrectNumFiles(2, 51, 2);
 
         assertEquals("there is a folder with 1 file", 1,
                 Math.min(folder1, folder2));
@@ -99,127 +109,127 @@ public class SortTest extends TestCase {
         assertEquals("there is a folder with 50 file", 50,
                 Math.max(folder1, folder2));
 
-        assertEquals("old files are removed", 2, path.toFile().list().length);
     }
 
     @Test
     public void testSortFiles_10000() throws Exception {
-        makeFolderWithMockFiles(path, 10000);
+        makeFolderWithMockFiles(10000);
 
-        Sorter.sortDirectory(path);
-        List<File> folderList = getFileList();
+        Sorter.sortDirectory(root);
 
-        assertEquals("sorter creates folders", 200, folderList.size());
+        foldersInRoot = getRootFiles().size();
+        filesInFolders = getRootFiles().stream().mapToInt(f -> f.list().length)
+                .sum();
+        filesInRoot = root.toFile().list().length;
 
-        int sum = folderList.stream().mapToInt(f -> f.list().length).sum();
-        assertEquals("all files are moved", 10000, sum);
-
-        assertEquals("old files are removed", 200, path.toFile().list().length);
+        assertCorrectNumFiles(200, 10000, 200);
     }
 
     @Test
     public void testSortFiles_10001() throws Exception {
-        makeFolderWithMockFiles(path, 10001);
+        makeFolderWithMockFiles(10001);
 
-        Sorter.sortDirectory(path);
-        List<File> folderList = getFileList();
+        Sorter.sortDirectory(root);
 
-        assertEquals("sorter creates folders", 201, folderList.size());
+        foldersInRoot = getRootFiles().size();
+        filesInFolders = getRootFiles().stream().mapToInt(f -> f.list().length)
+                .sum();
+        filesInRoot = root.toFile().list().length;
 
-        int sum = folderList.stream().mapToInt(f -> f.list().length).sum();
-        assertEquals("all files are moved", 10001, sum);
-
-        assertEquals("old files are removed", 201, path.toFile().list().length);
+        assertCorrectNumFiles(201, 10001, 201);
     }
 
     @Test
     public void testSortFiles_groupSizeEqualToFiles() throws Exception {
-        makeFolderWithMockFiles(path, 1);
+        makeFolderWithMockFiles(1);
 
         String[] args = { "1" };
-        Sorter.sortDirectory(path, args);
+        Sorter.sortDirectory(root, args);
 
-        List<File> fileList = getFileList();
+        foldersInRoot = getRootFiles().size();
+        filesInFolders = getRootFiles().get(0).list().length;
+        filesInRoot = root.toFile().list().length;
 
-        assertEquals("sorter creates folders", 1, fileList.size());
-
-        File folder = fileList.get(0);
-        assertEquals("folder has same amount of files", 1, folder.list().length);
-
-        assertEquals("old files are removed", 1, path.toFile().list().length);
-    }
-
-    // expected exception not working, no idea why
-    @Test
-    public void testSortFiles_groupSize_fail() throws Exception {
-        makeFolderWithMockFiles(path, 1);
-
-        String[] args = { "0" };
-        try {
-            Sorter.sortDirectory(path, args);
-            fail();
-
-        } catch (Exception e) {
-            assertTrue("can get exception",
-                    e.getMessage().contains("group size less than 1"));
-        }
+        assertCorrectNumFiles(1, 1, 1);
     }
 
     @Test
     public void testSortFiles_groupSizeLargerThanFiles() throws Exception {
-        makeFolderWithMockFiles(path, 1);
+        makeFolderWithMockFiles(1);
 
         String[] args = { "2" };
-        Sorter.sortDirectory(path, args);
+        Sorter.sortDirectory(root, args);
 
-        List<File> fileList = getFileList();
+        foldersInRoot = getRootFiles().size();
+        filesInFolders = getRootFiles().get(0).list().length;
+        filesInRoot = root.toFile().list().length;
 
-        assertEquals("sorter creates folders", 1, fileList.size());
-
-        File folder = fileList.get(0);
-        assertEquals("folder has same amount of files", 1, folder.list().length);
-
-        assertEquals("old files are removed", 1, path.toFile().list().length);
-
+        assertCorrectNumFiles(1, 1, 1);
     }
 
     @Test
     public void testSortFiles_groupSizeLessThanFiles() throws Exception {
-        makeFolderWithMockFiles(path, 2);
+        makeFolderWithMockFiles(2);
 
         String[] args = { "1" };
-        Sorter.sortDirectory(path, args);
+        Sorter.sortDirectory(root, args);
 
-        List<File> fileList = getFileList();
+        foldersInRoot = getRootFiles().size();
+        int folder1 = getRootFiles().get(0).list().length;
+        int folder2 = getRootFiles().get(1).list().length;
+        filesInFolders = folder1 + folder2;
+        filesInRoot = root.toFile().list().length;
 
-        assertEquals("sorter creates folders", 2, fileList.size());
-
-        int folder1 = fileList.get(0).list().length;
-        int folder2 = fileList.get(1).list().length;
-        assertEquals("folder has same amount of files", 2, folder1 + folder2);
-
-        assertEquals("old files are removed", 2, path.toFile().list().length);
-
+        assertCorrectNumFiles(2, 2, 2);
     }
 
-    private List<File> getFileList() {
-        File[] listFiles = path.toFile().listFiles();
-        List<File> asList = Arrays.asList(listFiles);
+    @Test
+    public void testSortFiles_groupByType() throws Exception {
+        makeFolderWithMockFiles(2, ".jpg", ".gif");
 
-        List<File> fileList = asList.parallelStream().filter(File::isDirectory)
-                .collect(Collectors.toList());
-        return fileList;
+        String[] args = { ".jpg" };
+        Sorter.sortDirectory(root, args);
+
+        assertTrue("file is correct type",
+                getRootFiles().get(0).list()[0].contains(".jpg"));
+
+        foldersInRoot = getRootFiles().size();
+        filesInFolders = getRootFiles().get(0).list().length;
+        filesInRoot = root.toFile().list().length;
+
+        assertCorrectNumFiles(1, 1, 2);
     }
 
-    private void makeFolderWithMockFiles(Path path, int numFiles)
+    @Test
+    public void testSortFiles_groupByType_2() throws Exception {
+        fail("make test with 2 types");
+    }
+
+    private List<File> getRootFiles() {
+        if (rootFiles == null) {
+            Stream<File> stream = Stream.of(root.toFile().listFiles());
+            rootFiles = stream.parallel().filter(File::isDirectory)
+                    .collect(Collectors.toList());
+            return rootFiles;
+        }
+        return rootFiles;
+    }
+
+    private void makeFolderWithMockFiles(int numFiles, String... suffixes)
             throws IOException {
-        File file = path.toFile();
+
+        File file = root.toFile();
         if (!file.exists()) {
             file.mkdir();
         }
 
         for (int i = 0; i < numFiles; ++i) {
-            File newFile = new File(path.toString(), String.valueOf(i));
+            String name = String.valueOf(i);
+            if (suffixes.length > 0) {
+                int index = i % suffixes.length;
+                name += suffixes[index];
+            }
+            File newFile = new File(root.toString(), name);
             newFile.createNewFile();
         }
     }
