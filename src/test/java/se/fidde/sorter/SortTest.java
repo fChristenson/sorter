@@ -245,6 +245,17 @@ public class SortTest extends TestCase {
 
     }
 
+    @Test
+    public void testGroupByTypeAndSize() throws Exception {
+        makeFolderWithMockFiles(3, ".jpg");
+        Sorter.sortDirectory(root, ".jpg", "1");
+
+        getRootNumbers();
+        filesInFolders = getRootFolders().stream()
+                .mapToInt(f -> f.list().length).sum();
+        assertNumFiles(3, 3, 3);
+    }
+
     private void assertNumFilesOfType(String[] strings, int expected,
             String type) {
         Stream<String> stream = Stream.of(strings);
