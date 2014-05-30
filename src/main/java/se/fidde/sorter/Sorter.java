@@ -29,12 +29,10 @@ public class Sorter extends AbstractSorter {
         boolean sortBySuffix = hasSuffixArgs(args);
 
         if (sortBySize && sortBySuffix) {
-            List<List<File>> suffixList = TypeSorter.sortBySuffix(fileList,
-                    args);
-
-            suffixList.parallelStream().forEach(list -> {
-                GroupSizeSorter.sortByGroupSize(path, fileList, args);
-            });
+            TypeSorter.sortBySuffix(fileList, args).parallelStream()
+                    .forEach(list -> {
+                        GroupSizeSorter.sortByGroupSize(path, fileList, args);
+                    });
 
         } else if (sortBySuffix) {
             List<List<File>> groupedList = TypeSorter.sortBySuffix(fileList,
