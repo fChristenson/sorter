@@ -15,7 +15,8 @@ public class Sorter {
 
     private static final int DEFAULT_GROUP_SIZE = 50;
 
-    public static void sortDirectory(Path path, String... args) {
+    public static void sortDirectory(Path path, String... args)
+            throws Exception {
         File file = path.toFile();
 
         if (file.exists() && file.isDirectory()) {
@@ -50,10 +51,21 @@ public class Sorter {
         });
     }
 
-    private static boolean hasSuffixArgs(String[] args) {
+    private static boolean hasSuffixArgs(String[] args) throws Exception {
         Stream<String> stream = Stream.of(args);
         long count = stream.filter(str -> str.matches("\\.\\w+")).count();
+        if (count < 1) {
+            checkForSuffixErrors(Stream.of(args));
+        }
         return count > 0;
+    }
+
+    private static void checkForSuffixErrors(Stream<String> stream)
+            throws Exception {
+        long count = stream.filter(str -> str.matches("\\D+")).count();
+        if (count > 0) {
+            throw new Exception("no valid suffix");
+        }
     }
 
     private static List<List<File>> createGroupedList(List<File> fileList,
