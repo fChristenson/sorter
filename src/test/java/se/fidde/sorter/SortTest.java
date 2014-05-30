@@ -237,10 +237,10 @@ public class SortTest extends TestCase {
 
         } catch (Exception e) {
             assertTrue("is right error", e.getMessage().contains("no valid"));
-            assertEquals("right amount of files in root", 1, root.toFile()
-                    .list().length);
-            assertTrue("file has not been touched",
-                    root.toFile().list()[0].contains(JPG));
+
+            String[] files = root.toFile().list();
+            assertEquals("right amount of files in root", 1, files.length);
+            assertTrue("file has not been touched", files[0].contains(JPG));
         }
 
     }
