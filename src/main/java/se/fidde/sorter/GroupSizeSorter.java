@@ -9,13 +9,10 @@ import java.util.stream.Stream;
 class GroupSizeSorter extends AbstractSorter {
     private static final int DEFAULT_GROUP_SIZE = 50;
 
-    static void sortByGroupSize(Path path, List<File> fileList, int size,
-            String... args) {
-        // we group the list by size so we can add each sublist to a new
-        // folder
+    static void sortByGroupSize(Path path, List<File> fileList, String[] args) {
         int groupSize = getGroupSize(args);
-        List<List<File>> groupedList = createGroupedList(fileList, size,
-                groupSize);
+        List<List<File>> groupedList = createGroupedList(fileList,
+                fileList.size(), groupSize);
 
         groupedList.forEach(list -> {
             File newFolder = createNewFolderIn(path);

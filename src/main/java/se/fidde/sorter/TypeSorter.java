@@ -1,23 +1,16 @@
 package se.fidde.sorter;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class TypeSorter extends AbstractSorter {
-    static void sortBySuffix(List<File> fileList, Path path, String[] suffix) {
+class TypeSorter {
+    static List<List<File>> sortBySuffix(List<File> fileList, String[] suffix) {
 
         List<String> suffixList = getSuffixList(suffix);
-        List<List<File>> groupedList = createListGroupedBySuffix(fileList,
-                suffixList);
-
-        groupedList.parallelStream().forEach(list -> {
-            File folder = createNewFolderIn(path);
-            moveFilesToFolder(list, folder);
-        });
+        return createListGroupedBySuffix(fileList, suffixList);
     }
 
     private static List<List<File>> createListGroupedBySuffix(
