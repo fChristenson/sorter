@@ -25,14 +25,37 @@ public class Sorter extends AbstractSorter {
     private static void sort(Path path, List<File> fileList, String... args)
             throws Exception {
 
-        int size = fileList.size();
+        boolean sortBySize = hasSizeArgs(args);
         boolean sortBySuffix = hasSuffixArgs(args);
-        if (sortBySuffix) {
-            TypeSorter.sortBySuffix(fileList, path, args);
+
+        if (sortBySize && sortBySuffix) {
+            List<List<File>> bySuffix = TypeSorter.sortBySuffix(fileList, args);
+
+            bySuffix.parallelStream().forEach(list -> {
+                SizeSorter.sortByGroupSize(path, list, args);
+            });
+
+        } else if (sortBySuffix) {
+            List<List<File>> groupedList = TypeSorter.sortBySuffix(fileList,
+                    args);
+
+            groupedList.parallelStream().forEach(list -> {
+                File folder = createNewFolderIn(path);
+                moveFilesToFolder(list, folder);
+            });
 
         } else {
-            GroupSizeSorter.sortByGroupSize(path, fileList, size, args);
+            SizeSorter.sortByGroupSize(path, fileList, args);
         }
+    }
+
+    private static boolean hasSizeArgs(String[] args) {
+        Stream<String> stream = Stream.of(args);
+        long count = stream.filter(str -> str.matches("\\d+")).count();
+        if (count > 0) {
+            return true;
+        }
+        return false;
     }
 
     private static boolean hasSuffixArgs(String[] args) throws Exception {
