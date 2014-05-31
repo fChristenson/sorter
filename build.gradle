@@ -1,0 +1,21 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'application'
+
+group = 'se.fidde'
+version = 'v0.1'
+
+description = """sorter"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+mainClassName = "se.fidde.sorter.Sorter"
+
+
+repositories {
+        
+     maven { url "http://repo.maven.apache.org/maven2" }
+}
+dependencies {
+    compile group: 'junit', name: 'junit', version:'4.11'
+}

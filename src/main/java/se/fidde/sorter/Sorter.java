@@ -3,11 +3,32 @@ package se.fidde.sorter;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Sorter extends AbstractSorter {
+
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            System.out.println("Please add a target folder");
+
+        } else {
+            try {
+                Path path = Paths.get(args[0]);
+                Sorter.sortDirectory(path,
+                        Arrays.copyOfRange(args, 1, args.length));
+                System.out.println("Done");
+
+            } catch (Exception e) {
+                System.out.println("An error occured");
+                e.printStackTrace();
+                System.exit(0);
+            }
+        }
+    }
 
     public static void sortDirectory(Path path, String... args)
             throws Exception {
@@ -19,6 +40,9 @@ public class Sorter extends AbstractSorter {
                     .filter(f -> !f.isDirectory()).collect(Collectors.toList());
 
             sort(path, fileList, args);
+
+        } else {
+            System.out.println("Could not sort folder: " + path);
         }
     }
 
