@@ -32,14 +32,21 @@ public class SortTest extends TestCase {
     @Before
     protected void setUp() throws Exception {
         root = Paths.get("testfolder");
+        root.toFile().mkdir();
+
+        int length = root.toFile().list().length;
+        if (length != 0) {
+            deleteFolder(root);
+            assertEquals("folder empty", 0, length);
+        }
+        foldersInRoot = 0;
+        filesInFolders = 0;
+        filesInRoot = 0;
     }
 
     @After
     protected void tearDown() throws Exception {
         deleteFolder(root);
-        foldersInRoot = 0;
-        filesInFolders = 0;
-        filesInRoot = 0;
     }
 
     private void deleteFolder(Path path) throws IOException {
@@ -73,15 +80,21 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testSortFiles_50() throws Exception {
+    public void test50() throws Exception {
         makeFolderWithMockFiles(50);
 
         Sorter.sortDirectory(root);
+        runBasicTests(1, 50, 1);
+    }
 
+    private void runBasicTests(int foldersExpected, int filesExpected,
+            int remainingExpected) {
         getRootNumbers();
-        filesInFolders = getRootFolders().get(0).list().length;
+        getNumFilesInRootFolders();
 
-        assertNumFiles(1, 50, 1);
+        assertEquals("folders in root", foldersExpected, foldersInRoot);
+        assertEquals("files in folders", filesExpected, filesInFolders);
+        assertEquals("files in root", remainingExpected, filesInRoot);
     }
 
     private void getRootNumbers() {
@@ -89,150 +102,81 @@ public class SortTest extends TestCase {
         filesInRoot = root.toFile().list().length;
     }
 
-    private void assertNumFiles(int foldersExpected, int filesExpected,
-            int remainingExpected) {
-
-        assertEquals("folders in root", foldersExpected, foldersInRoot);
-        assertEquals("files in folders", filesExpected, filesInFolders);
-        assertEquals("files in root", remainingExpected, filesInRoot);
-    }
-
     @Test
-    public void testSortFiles_51() throws Exception {
+    public void test51Files() throws Exception {
         makeFolderWithMockFiles(51);
 
         Sorter.sortDirectory(root);
-
-        getRootNumbers();
-        int folder1 = getRootFolders().get(0).list().length;
-        int folder2 = getRootFolders().get(1).list().length;
-        filesInFolders = folder1 + folder2;
-
-        assertNumFiles(2, 51, 2);
-
-        assertEquals("there is a folder with 1 file", 1,
-                Math.min(folder1, folder2));
-
-        assertEquals("there is a folder with 50 file", 50,
-                Math.max(folder1, folder2));
-
+        runBasicTests(2, 51, 2);
+        assertFileSpread(1, 50);
     }
 
     @Test
-    public void testSortFiles_10000() throws Exception {
+    public void test10000Files() throws Exception {
         makeFolderWithMockFiles(10000);
 
         Sorter.sortDirectory(root);
-
-        getRootNumbers();
-        filesInFolders = getRootFolders().stream()
-                .mapToInt(f -> f.list().length).sum();
-
-        assertNumFiles(200, 10000, 200);
+        runBasicTests(200, 10000, 200);
     }
 
     @Test
-    public void testSortFiles_10001() throws Exception {
+    public void test10001Files() throws Exception {
         makeFolderWithMockFiles(10001);
 
         Sorter.sortDirectory(root);
-
-        getRootNumbers();
-        filesInFolders = getRootFolders().stream()
-                .mapToInt(f -> f.list().length).sum();
-
-        assertNumFiles(201, 10001, 201);
+        runBasicTests(201, 10001, 201);
     }
 
     @Test
-    public void testSortFiles_groupSizeEqualToFiles() throws Exception {
+    public void testSizeEqualToFiles() throws Exception {
         makeFolderWithMockFiles(1);
 
-        String[] args = { "1" };
-        Sorter.sortDirectory(root, args);
-
-        getRootNumbers();
-        filesInFolders = getRootFolders().get(0).list().length;
-
-        assertNumFiles(1, 1, 1);
+        Sorter.sortDirectory(root, "1");
+        runBasicTests(1, 1, 1);
     }
 
     @Test
-    public void testSortFiles_groupSizeLargerThanFiles() throws Exception {
+    public void testSizeLargerThanFiles() throws Exception {
         makeFolderWithMockFiles(1);
 
-        String[] args = { "2" };
-        Sorter.sortDirectory(root, args);
-
-        getRootNumbers();
-        filesInFolders = getRootFolders().get(0).list().length;
-
-        assertNumFiles(1, 1, 1);
+        Sorter.sortDirectory(root, "2");
+        runBasicTests(1, 1, 1);
     }
 
     @Test
-    public void testSortFiles_groupSizeLessThanFiles() throws Exception {
+    public void testSizeLessThanFiles() throws Exception {
         makeFolderWithMockFiles(2);
 
-        String[] args = { "1" };
-        Sorter.sortDirectory(root, args);
-
-        getRootNumbers();
-        int folder1 = getRootFolders().get(0).list().length;
-        int folder2 = getRootFolders().get(1).list().length;
-        filesInFolders = folder1 + folder2;
-
-        assertNumFiles(2, 2, 2);
+        Sorter.sortDirectory(root, "1");
+        runBasicTests(2, 2, 2);
     }
 
     @Test
-    public void testSortFiles_groupByType() throws Exception {
+    public void testByType() throws Exception {
         makeFolderWithMockFiles(2, JPG, GIF);
 
-        String[] args = { JPG };
-        Sorter.sortDirectory(root, args);
-
+        Sorter.sortDirectory(root, JPG);
         assertTrue("file is correct type",
                 getRootFolders().get(0).list()[0].contains(JPG));
 
-        getRootNumbers();
-        filesInFolders = getRootFolders().get(0).list().length;
-
-        assertNumFiles(1, 1, 2);
+        runBasicTests(1, 1, 2);
     }
 
     @Test
-    public void testSortFiles_groupByType_2() throws Exception {
+    public void testByType_2Types() throws Exception {
         makeFolderWithMockFiles(10, JPG, GIF);
 
-        String[] args = { JPG, GIF };
-        Sorter.sortDirectory(root, args);
-
-        String string = getRootFolders().get(0).list()[0];
-        if (string.contains(JPG)) {
-            assertNumFilesOfType(getRootFolders().get(0).list(), 5, JPG);
-            assertNumFilesOfType(getRootFolders().get(1).list(), 5, GIF);
-
-        } else {
-            assertNumFilesOfType(getRootFolders().get(0).list(), 5, GIF);
-            assertNumFilesOfType(getRootFolders().get(1).list(), 5, JPG);
-
-        }
-
-        getRootNumbers();
-        filesInFolders = getRootFolders().get(0).list().length
-                + getRootFolders().get(1).list().length;
-
-        assertNumFiles(2, 10, 2);
+        Sorter.sortDirectory(root, JPG, GIF);
+        assertTypeSpread(5, 5);
+        runBasicTests(2, 10, 2);
     }
 
     @Test
-    public void testSortFiles_groupByType_fail() throws IOException {
+    public void testByType_fail() throws IOException {
         makeFolderWithMockFiles(1, JPG);
 
-        String[] args = { "fail" };
         try {
-            Sorter.sortDirectory(root, args);
+            Sorter.sortDirectory(root, "fail");
             fail("no exception");
 
         } catch (Exception e) {
@@ -246,40 +190,75 @@ public class SortTest extends TestCase {
     }
 
     @Test
-    public void testGroupByTypeAndSize() throws Exception {
+    public void testByTypeAndSize_1TypeSize1() throws Exception {
         makeFolderWithMockFiles(3, ".jpg");
-        Sorter.sortDirectory(root, ".jpg", "1");
 
-        getRootNumbers();
-        filesInFolders = getRootFolders().stream()
-                .mapToInt(f -> f.list().length).sum();
-        assertNumFiles(3, 3, 3);
+        Sorter.sortDirectory(root, ".jpg", "1");
+        runBasicTests(3, 3, 3);
     }
 
     @Test
-    public void testGroupByTypeAndSize_2() throws Exception {
+    public void testByTypeAndSize_3TypesSize1() throws Exception {
         makeFolderWithMockFiles(3, ".jpg", ".gif", ".flv");
-        Sorter.sortDirectory(root, ".jpg", "1", ".gif", ".flv");
 
-        getRootNumbers();
-        filesInFolders = getRootFolders().stream()
-                .mapToInt(f -> f.list().length).sum();
-        assertNumFiles(3, 3, 3);
+        Sorter.sortDirectory(root, ".jpg", "1", ".gif", ".flv");
+        runBasicTests(3, 3, 3);
     }
 
-    private void assertNumFilesOfType(String[] strings, int expected,
-            String type) {
-        Stream<String> stream = Stream.of(strings);
+    private void getNumFilesInRootFolders() {
+        filesInFolders = getRootFolders().stream()
+                .mapToInt(f -> f.list().length).sum();
+    }
+
+    @Test
+    public void testByTypeAndSize_2TypesSize2() throws Exception {
+        makeFolderWithMockFiles(3, JPG, GIF);
+
+        Sorter.sortDirectory(root, ".jpg", "2", ".gif");
+        runBasicTests(2, 3, 2);
+        assertFileSpread(1, 2);
+        assertTypeSpread(1, 2);
+    }
+
+    private void assertTypeSpread(int smaller, int larger) {
+        String string = getRootFolders().get(0).list()[0];
+
+        if (string.contains(JPG)) {
+            assertNumFilesOfType(larger, JPG, getRootFolders().get(0).list());
+            assertNumFilesOfType(smaller, GIF, getRootFolders().get(1).list());
+
+        } else {
+            assertNumFilesOfType(smaller, GIF, getRootFolders().get(0).list());
+            assertNumFilesOfType(larger, JPG, getRootFolders().get(1).list());
+
+        }
+    }
+
+    private void assertFileSpread(int smaller, int larger) {
+        String[] folder1 = getRootFolders().get(0).list();
+        String[] folder2 = getRootFolders().get(1).list();
+        assertEquals("folder with 1 file", smaller,
+                Math.min(folder1.length, folder2.length));
+
+        assertEquals("folder with 2 files", larger,
+                Math.max(folder1.length, folder2.length));
+    }
+
+    private void assertNumFilesOfType(int expected, String type,
+            String... fileName) {
+
+        Stream<String> stream = Stream.of(fileName);
         long count = stream.filter(str -> str.contains(type)).count();
+
         assertEquals("right number of files", expected, count);
-        assertEquals("no unwanted files", expected, strings.length);
+        assertEquals("no unwanted files", expected, fileName.length);
     }
 
     private List<File> getRootFolders() {
         if (rootFolders == null) {
             Stream<File> stream = Stream.of(root.toFile().listFiles());
-            rootFolders = stream.parallel().filter(File::isDirectory)
-                    .collect(Collectors.toList());
+            rootFolders = stream.filter(File::isDirectory).collect(
+                    Collectors.toList());
             return rootFolders;
         }
         return rootFolders;

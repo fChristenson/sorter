@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
 
-class GroupSizeSorter extends AbstractSorter {
+class SizeSorter extends AbstractSorter {
     private static final int DEFAULT_GROUP_SIZE = 50;
 
     static void sortByGroupSize(Path path, List<File> fileList, String[] args) {
@@ -42,5 +42,4 @@ class GroupSizeSorter extends AbstractSorter {
         }
         return result;
     }
-
 }

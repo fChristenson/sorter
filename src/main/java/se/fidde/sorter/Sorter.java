@@ -32,7 +32,7 @@ public class Sorter extends AbstractSorter {
             List<List<File>> bySuffix = TypeSorter.sortBySuffix(fileList, args);
 
             bySuffix.parallelStream().forEach(list -> {
-                GroupSizeSorter.sortByGroupSize(path, list, args);
+                SizeSorter.sortByGroupSize(path, list, args);
             });
 
         } else if (sortBySuffix) {
@@ -45,7 +45,7 @@ public class Sorter extends AbstractSorter {
             });
 
         } else {
-            GroupSizeSorter.sortByGroupSize(path, fileList, args);
+            SizeSorter.sortByGroupSize(path, fileList, args);
         }
     }
 

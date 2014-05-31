@@ -16,7 +16,7 @@ class TypeSorter {
     private static List<List<File>> createListGroupedBySuffix(
             List<File> fileList, List<String> suffixList) {
         List<List<File>> groupedList = new LinkedList<>();
-        suffixList.parallelStream().forEach(
+        suffixList.stream().forEach(
                 str -> {
                     List<File> list = fileList.parallelStream()
                             .filter(f -> f.getName().contains(str))
