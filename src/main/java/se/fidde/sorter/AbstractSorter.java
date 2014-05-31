@@ -8,7 +8,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
-public abstract class AbstractSorter {
+abstract class AbstractSorter {
     protected static void moveFilesToFolder(List<File> fileList, File newFolder) {
         fileList.parallelStream().forEach(
                 file -> {
